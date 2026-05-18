@@ -73,7 +73,7 @@ export function LiveDashboard() {
         <Stat label="Requests" value={current?.requestsMade ?? 0} />
       </section>
 
-      <section className="grid gap-4">
+      <section className="grid gap-4 xl:grid-cols-2">
         <Card>
           <h2 className="text-lg font-semibold">Exact Division</h2>
           <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in BLACK / Master 2 / Male / Light Feather.</p>
