@@ -92,10 +92,13 @@ export async function runLiveScan(profile = defaultProfile): Promise<LiveScanRes
       if (!hasExact) return null;
 
       const competitors = await fetchRegistrationCompetitors(registration.link, profile.exactDivision, profile.gi);
+      const sportCompetitors = competitors.filter((competitor) => competitor.gi == null || competitor.gi === profile.gi);
+      if (sportCompetitors.length === 0) return null;
+
       return {
         eventName,
         registrationLink: registration.link,
-        competitors: competitors.map((competitor) => ({
+        competitors: sportCompetitors.map((competitor) => ({
           ...competitor,
           registeredDivision: profile.exactDivision,
           eventName,

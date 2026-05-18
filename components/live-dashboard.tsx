@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, Stat, Badge } from "@/components/ui";
 import type { LiveScanResult } from "@/lib/live-scan";
 
-const storagePrefix = "bracket-watch:last-scan:";
+const storagePrefix = "bracket-watch:v2:last-scan:";
 const genderOptions = ["Male", "Female"];
 const ageOptions = ["Adult", "Master 1", "Master 2", "Master 3", "Master 4", "Master 5", "Master 6", "Master 7"];
 const beltOptions = ["WHITE", "BLUE", "PURPLE", "BROWN", "BLACK"];
@@ -27,6 +27,7 @@ export function LiveDashboard() {
   const activeRequest = useRef(0);
   const abortController = useRef<AbortController | null>(null);
   const selectedExactDivision = `${division.belt} / ${division.age} / ${division.gender} / ${division.weight}`;
+  const selectedSportDivision = `${division.gi ? "Gi" : "No-Gi"} / ${selectedExactDivision}`;
   const selectedScanKey = `${division.gi ? "gi" : "nogi"}|${selectedExactDivision}`;
   const displayed = current?.exactDivision === selectedExactDivision && current.gi === division.gi ? current : null;
   const radarEvents = useMemo(() => {
@@ -97,7 +98,7 @@ export function LiveDashboard() {
         <div>
           <h1 className="text-4xl font-semibold">Bracket Watch</h1>
           <p className="mt-2 text-zinc-400">
-            {division.gi ? "Gi" : "No Gi"} / {division.gender} / {division.age} / {division.belt} / {division.weight}
+            {selectedSportDivision}
           </p>
         </div>
         <button onClick={runScan} disabled={status === "running"} className="rounded bg-accent px-4 py-2 font-semibold text-black disabled:opacity-60">
@@ -145,7 +146,7 @@ export function LiveDashboard() {
       <section className="grid gap-4 xl:grid-cols-2">
         <Card>
           <h2 className="text-lg font-semibold">Exact Division</h2>
-          <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in {selectedExactDivision}.</p>
+          <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in {selectedSportDivision}.</p>
           <div className="mt-4 space-y-3">
             {displayed?.exactEvents.map((event) => {
               const isOpen = openEvents[event.eventName] ?? false;
