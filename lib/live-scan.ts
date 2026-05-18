@@ -20,6 +20,12 @@ const defaultProfile: WatchProfileInput = {
   exactDivision: TARGET_DIVISION
 };
 
+function eventMatchesSport(eventName: string, gi: boolean) {
+  const normalized = eventName.toLowerCase();
+  const isNoGiEvent = normalized.includes("no-gi") || normalized.includes("no gi") || normalized.includes("sem kimono");
+  return gi ? !isNoGiEvent : isNoGiEvent;
+}
+
 export type LiveExactEvent = {
   eventName: string;
   registrationLink: string;
@@ -80,17 +86,19 @@ export async function runLiveScan(profile = defaultProfile): Promise<LiveScanRes
   const exactEventsPromise = mapWithConcurrency(links, 6, async (registration) => {
     try {
       const categories = await fetchRegistrationCategories(registration.link);
+      const eventName = categories.event_name || registration.name;
+      if (!eventMatchesSport(eventName, profile.gi)) return null;
       const hasExact = categories.categories.map(normalizeDivision).includes(normalizeDivision(profile.exactDivision));
       if (!hasExact) return null;
 
       const competitors = await fetchRegistrationCompetitors(registration.link, profile.exactDivision, profile.gi);
       return {
-        eventName: categories.event_name || registration.name,
+        eventName,
         registrationLink: registration.link,
         competitors: competitors.map((competitor) => ({
           ...competitor,
           registeredDivision: profile.exactDivision,
-          eventName: categories.event_name || registration.name,
+          eventName,
           registrationLink: registration.link
         }))
       };

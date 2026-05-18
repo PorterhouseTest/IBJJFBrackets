@@ -159,7 +159,7 @@ export function LiveDashboard() {
                     <div>
                       <h3 className="font-semibold">{event.eventName}</h3>
                       <p className="mt-1 text-sm text-zinc-400">
-                        {event.competitors.length} registered / top rating {topCompetitor?.rating ?? "n/a"}
+                        {event.competitors.length} registered / top rating {roundRating(topCompetitor?.rating)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -175,11 +175,9 @@ export function LiveDashboard() {
                             <tr>
                               <th className="py-2">Athlete</th>
                               <th>Team</th>
-                              <th>Country</th>
                               <th>Rank</th>
                               <th>Rating</th>
                               <th>Matches</th>
-                              <th>Seed</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -189,11 +187,9 @@ export function LiveDashboard() {
                                 <tr key={`${event.eventName}-${competitor.name}`} className="border-t border-line">
                                   <td className="py-3 font-medium">{competitor.name}</td>
                                   <td>{competitor.team ?? "n/a"}</td>
-                                  <td>{competitor.country ?? "n/a"}</td>
                                   <td>{competitor.rank ?? "n/a"}</td>
-                                  <td>{competitor.rating ?? "n/a"}</td>
+                                  <td>{roundRating(competitor.rating)}</td>
                                   <td>{competitor.match_count ?? "n/a"}</td>
-                                  <td>{competitor.seed ?? "n/a"}</td>
                                 </tr>
                               ))}
                           </tbody>
@@ -228,7 +224,7 @@ export function LiveDashboard() {
                     <div>
                       <h3 className="font-semibold">{event.eventName}</h3>
                       <p className="mt-1 text-sm text-zinc-400">
-                        {event.athletes.length} radar athlete{event.athletes.length === 1 ? "" : "s"} / top rating {topAthlete?.rating ?? "n/a"}
+                        {event.athletes.length} radar athlete{event.athletes.length === 1 ? "" : "s"} / top rating {roundRating(topAthlete?.rating)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -244,7 +240,6 @@ export function LiveDashboard() {
                             <tr>
                               <th className="py-2">Athlete</th>
                               <th>Registered division</th>
-                              <th>Country</th>
                               <th>Rank</th>
                               <th>Rating</th>
                               <th>Matches</th>
@@ -256,9 +251,8 @@ export function LiveDashboard() {
                               <tr key={`${event.eventName}-${athlete.athleteName}-${athlete.registeredDivision}`} className="border-t border-line">
                                 <td className="py-3 font-medium">{athlete.athleteName}</td>
                                 <td>{athlete.registeredDivision}</td>
-                                <td>{athlete.country ?? "n/a"}</td>
                                 <td>{athlete.rank ?? "n/a"}</td>
-                                <td>{athlete.rating ?? "n/a"}</td>
+                                <td>{roundRating(athlete.rating)}</td>
                                 <td>{athlete.matchCount ?? "n/a"}</td>
                                 <td>
                                   {athlete.instagram ? (
@@ -291,6 +285,10 @@ export function LiveDashboard() {
 
 function selectedStorageKey(scanKey: string) {
   return `${storagePrefix}${scanKey}`;
+}
+
+function roundRating(rating: number | null | undefined) {
+  return typeof rating === "number" ? Math.round(rating) : "n/a";
 }
 
 function DivisionSelect({
