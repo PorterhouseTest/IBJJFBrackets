@@ -1,4 +1,4 @@
-import type { ChangeType, Severity, SourceType } from "@prisma/client";
+import type { ChangeType, Prisma, Severity, SourceType } from "@prisma/client";
 
 export type SnapshotItem = {
   sourceType: SourceType;
@@ -22,7 +22,7 @@ export type ChangeDraft = {
   eventName?: string;
   oldValue?: string;
   newValue?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 };
 
 function exactCompetitorKey(item: SnapshotItem) {
