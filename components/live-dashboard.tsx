@@ -5,9 +5,20 @@ import { Card, Stat, Badge } from "@/components/ui";
 import type { LiveScanResult } from "@/lib/live-scan";
 
 const storageKey = "bracket-watch:last-scan";
+const genderOptions = ["Male", "Female"];
+const ageOptions = ["Adult", "Master 1", "Master 2", "Master 3", "Master 4", "Master 5", "Master 6", "Master 7"];
+const beltOptions = ["WHITE", "BLUE", "PURPLE", "BROWN", "BLACK"];
+const weightOptions = ["Rooster", "Light Feather", "Feather", "Light", "Middle", "Medium Heavy", "Heavy", "Super Heavy", "Ultra Heavy", "Open Class"];
 
 export function LiveDashboard() {
   const [current, setCurrent] = useState<LiveScanResult | null>(null);
+  const [division, setDivision] = useState({
+    gi: true,
+    gender: "Male",
+    age: "Master 2",
+    belt: "BLACK",
+    weight: "Light Feather"
+  });
   const [openEvents, setOpenEvents] = useState<Record<string, boolean>>({});
   const [openRadarEvents, setOpenRadarEvents] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
@@ -24,6 +35,7 @@ export function LiveDashboard() {
       }))
       .sort((a, b) => a.eventName.localeCompare(b.eventName));
   }, [current]);
+  const selectedExactDivision = `${division.belt} / ${division.age} / ${division.gender} / ${division.weight}`;
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey);
@@ -34,10 +46,16 @@ export function LiveDashboard() {
     setStatus("running");
     setError("");
     try {
-      const response = await fetch("/api/live-scan", { method: "POST" });
+      const response = await fetch("/api/live-scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(division)
+      });
       const payload = (await response.json()) as LiveScanResult | { error: string };
       if (!response.ok || "error" in payload) throw new Error("error" in payload ? payload.error : "Live scan failed");
       setCurrent(payload);
+      setOpenEvents({});
+      setOpenRadarEvents({});
       window.localStorage.setItem(storageKey, JSON.stringify(payload));
       setStatus("idle");
     } catch (scanError) {
@@ -51,7 +69,9 @@ export function LiveDashboard() {
       <section className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div>
           <h1 className="text-4xl font-semibold">Bracket Watch</h1>
-          <p className="mt-2 text-zinc-400">Gi / Male / Master 2 / Black / Light Feather</p>
+          <p className="mt-2 text-zinc-400">
+            {division.gi ? "Gi" : "No Gi"} / {division.gender} / {division.age} / {division.belt} / {division.weight}
+          </p>
         </div>
         <button onClick={runScan} disabled={status === "running"} className="rounded bg-accent px-4 py-2 font-semibold text-black disabled:opacity-60">
           {status === "running" ? "Scanning..." : "Run Scan Now"}
@@ -65,6 +85,26 @@ export function LiveDashboard() {
         </Card>
       ) : null}
 
+      <Card>
+        <div className="grid gap-3 md:grid-cols-5">
+          <label className="text-xs uppercase tracking-wide text-zinc-500">
+            Sport
+            <select
+              value={division.gi ? "Gi" : "No Gi"}
+              onChange={(event) => setDivision((value) => ({ ...value, gi: event.target.value === "Gi" }))}
+              className="mt-2 w-full rounded border border-line px-3 py-2 text-sm text-white"
+            >
+              <option>Gi</option>
+              <option>No Gi</option>
+            </select>
+          </label>
+          <DivisionSelect label="Gender" value={division.gender} options={genderOptions} onChange={(gender) => setDivision((value) => ({ ...value, gender }))} />
+          <DivisionSelect label="Age" value={division.age} options={ageOptions} onChange={(age) => setDivision((value) => ({ ...value, age }))} />
+          <DivisionSelect label="Belt" value={division.belt} options={beltOptions} onChange={(belt) => setDivision((value) => ({ ...value, belt }))} />
+          <DivisionSelect label="Weight" value={division.weight} options={weightOptions} onChange={(weight) => setDivision((value) => ({ ...value, weight }))} />
+        </div>
+      </Card>
+
       <section className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
         <Stat label="Last scan" value={current ? new Date(current.scannedAt).toLocaleString() : "Not yet"} />
         <Stat label="Exact events" value={current?.exactEventsFound ?? 0} />
@@ -76,7 +116,7 @@ export function LiveDashboard() {
       <section className="grid gap-4 xl:grid-cols-2">
         <Card>
           <h2 className="text-lg font-semibold">Exact Division</h2>
-          <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in BLACK / Master 2 / Male / Light Feather.</p>
+          <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in {selectedExactDivision}.</p>
           <div className="mt-4 space-y-3">
             {current?.exactEvents.map((event) => {
               const isOpen = openEvents[event.eventName] ?? false;
@@ -213,5 +253,30 @@ export function LiveDashboard() {
         </Card>
       </section>
     </div>
+  );
+}
+
+function DivisionSelect({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="text-xs uppercase tracking-wide text-zinc-500">
+      {label}
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded border border-line px-3 py-2 text-sm text-white">
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
