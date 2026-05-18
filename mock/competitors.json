@@ -1,0 +1,48 @@
+{
+  "competitors": [
+    {
+      "name": "Mateo Silva",
+      "team": "Atos Jiu-Jitsu",
+      "id": 1001,
+      "slug": "mateo-silva",
+      "instagram_profile": "mateosilvabjj",
+      "personal_name": "Mateo Silva",
+      "profile_image_url": null,
+      "country": "BR",
+      "age": "Master 2",
+      "belt": "BLACK",
+      "weight": "Light Feather",
+      "gender": "Male",
+      "gi": true,
+      "rating": 1512.4,
+      "match_count": 43,
+      "rank": 7,
+      "percentile": 92.1,
+      "seed": 1,
+      "ordinal": 1
+    },
+    {
+      "name": "Daniel Torres",
+      "team": "Alliance",
+      "id": 1002,
+      "slug": "daniel-torres",
+      "instagram_profile": null,
+      "personal_name": "Daniel Torres",
+      "profile_image_url": null,
+      "country": "US",
+      "age": "Master 2",
+      "belt": "BLACK",
+      "weight": "Light Feather",
+      "gender": "Male",
+      "gi": true,
+      "rating": 1488,
+      "match_count": 37,
+      "rank": 11,
+      "percentile": 88.4,
+      "seed": 2,
+      "ordinal": 2
+    }
+  ],
+  "side_swaps": [],
+  "side_swap_bailout_teams": []
+}

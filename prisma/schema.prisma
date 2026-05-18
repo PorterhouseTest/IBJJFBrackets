@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScanStatus {
+  RUNNING
+  SUCCESS
+  PARTIAL_SUCCESS
+  FAILED
+}
+
+enum SourceType {
+  EXACT_DIVISION
+  RADAR
+}
+
+enum ChangeType {
+  NEW_EVENT
+  REMOVED_EVENT
+  NEW_COMPETITOR
+  REMOVED_COMPETITOR
+  TEAM_CHANGED
+  DIVISION_CHANGED
+  NEW_RADAR_ATHLETE
+  REMOVED_RADAR_ATHLETE
+  ERROR
+}
+
+enum Severity {
+  INFO
+  IMPORTANT
+  CRITICAL
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model WatchProfile {
+  id            String               @id @default(cuid())
+  name          String
+  gi            Boolean
+  gender        String
+  age           String
+  belt          String
+  weight        String
+  exactDivision String
+  alertEmailEnabled Boolean              @default(true)
+  active        Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  scanRuns      ScanRun[]
+  events        EventSnapshot[]
+  competitors   CompetitorSnapshot[]
+  changes       ChangeLog[]
+}
+
+model ScanRun {
+  id                    String               @id @default(cuid())
+  watchProfileId        String
+  startedAt             DateTime             @default(now())
+  finishedAt            DateTime?
+  status                ScanStatus           @default(RUNNING)
+  sourceBaseUrl         String
+  exactEventsFound      Int                  @default(0)
+  exactCompetitorsFound Int                  @default(0)
+  radarAthletesFound    Int                  @default(0)
+  requestsMade          Int                  @default(0)
+  errorMessage          String?
+  rawSummary            Json?
+  watchProfile          WatchProfile         @relation(fields: [watchProfileId], references: [id], onDelete: Cascade)
+  events                EventSnapshot[]
+  competitors           CompetitorSnapshot[]
+  changes               ChangeLog[]
+
+  @@index([watchProfileId, status, startedAt])
+}
+
+model EventSnapshot {
+  id                   String               @id @default(cuid())
+  scanRunId            String
+  watchProfileId       String
+  eventName            String
+  eventStartDate       DateTime?
+  eventEndDate         DateTime?
+  registrationLink     String
+  eventId              String?
+  exactDivisionPresent Boolean
+  competitorCount      Int
+  createdAt            DateTime             @default(now())
+  scanRun              ScanRun              @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  watchProfile         WatchProfile         @relation(fields: [watchProfileId], references: [id], onDelete: Cascade)
+  competitors          CompetitorSnapshot[]
+
+  @@unique([scanRunId, registrationLink, eventName])
+  @@index([watchProfileId, eventStartDate])
+}
+
+model CompetitorSnapshot {
+  id                 String         @id @default(cuid())
+  scanRunId          String
+  eventSnapshotId    String?
+  watchProfileId     String
+  sourceType         SourceType
+  athleteName        String
+  personalName       String?
+  team               String?
+  country            String?
+  instagram          String?
+  profileImageUrl    String?
+  athleteId          String?
+  slug               String?
+  rating             Float?
+  rank               Int?
+  matchCount         Int?
+  percentile         Float?
+  seed               Int?
+  ordinal            Int?
+  registeredDivision String
+  eventName          String
+  eventStartDate     DateTime?
+  eventEndDate       DateTime?
+  registrationLink   String?
+  eventId            String?
+  createdAt          DateTime       @default(now())
+  scanRun            ScanRun        @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  eventSnapshot      EventSnapshot? @relation(fields: [eventSnapshotId], references: [id], onDelete: SetNull)
+  watchProfile       WatchProfile   @relation(fields: [watchProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([scanRunId, sourceType, athleteName, eventName, registeredDivision])
+  @@index([watchProfileId, sourceType, eventStartDate])
+  @@index([athleteName, eventName])
+}
+
+model ChangeLog {
+  id             String       @id @default(cuid())
+  watchProfileId String
+  scanRunId      String
+  changeType     ChangeType
+  severity       Severity
+  title          String
+  description    String
+  athleteName    String?
+  eventName      String?
+  oldValue       String?
+  newValue       String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  acknowledged   Boolean      @default(false)
+  watchProfile   WatchProfile @relation(fields: [watchProfileId], references: [id], onDelete: Cascade)
+  scanRun        ScanRun      @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+
+  @@index([watchProfileId, createdAt])
+}

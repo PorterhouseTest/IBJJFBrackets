@@ -1,0 +1,29 @@
+{
+  "rows": [
+    {
+      "rank": 4,
+      "athlete_id": 2001,
+      "name": "Rafael Costa",
+      "slug": "rafael-costa",
+      "instagram_profile": "rafaelcostabjj",
+      "personal_name": "Rafael Costa",
+      "profile_image_url": null,
+      "country": "BR",
+      "rating": 1565.2,
+      "match_count": 52,
+      "previous_rating": 1558.1,
+      "previous_rank": 5,
+      "registrations": [
+        {
+          "event_name": "Austin Winter International Open 2026",
+          "division": "BLACK / Master 3 / Male / Rooster",
+          "event_start_date": "2026-12-12",
+          "event_end_date": "2026-12-13",
+          "link": "/events/austin-winter-international-open-2026/registrations",
+          "event_id": 901
+        }
+      ]
+    }
+  ],
+  "totalPages": 1
+}
