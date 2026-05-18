@@ -1,11 +1,7 @@
 import Link from "next/link";
 
 const links = [
-  ["/", "Dashboard"],
-  ["/events", "Events"],
-  ["/athletes", "Athletes"],
-  ["/changes", "Changes"],
-  ["/settings", "Settings"]
+  ["/", "Dashboard"]
 ] as const;
 
 export function Nav() {

@@ -1,10 +1,10 @@
 # Bracket Watch
 
-Bracket Watch is a private, low-frequency scouting dashboard for one JiuJitsu.net target division:
+Bracket Watch is a zero-login, zero-database scouting dashboard for one JiuJitsu.net target division:
 
 `BLACK / Master 2 / Male / Light Feather`
 
-It scans upcoming JiuJitsu.net registration data once per day, stores exact division snapshots, tracks ranked target-division athletes who are registered elsewhere, and highlights changes since the previous successful scan.
+It scans JiuJitsu.net registration data when you click `Run Scan Now`, tracks ranked target-division athletes who are registered elsewhere, and highlights changes compared with the previous scan stored in your browser.
 
 ## What It Tracks
 
@@ -26,50 +26,24 @@ This is not a generic scraper dashboard. It is intentionally scoped to this pers
 - TypeScript strict mode
 - Tailwind CSS
 - Prisma
-- Postgres via `DATABASE_URL`
-- Vercel Cron
-- Optional Resend email alerts
+- Deploys to Vercel without required services
 
 ## Environment Variables
 
 ```bash
-DATABASE_URL=
 JIUJITSU_BASE_URL=https://jiujitsu.net
-CRON_SECRET=
-RESEND_API_KEY=
-ALERT_EMAIL_TO=
-ALERT_EMAIL_FROM=
 MOCK_JIUJITSU=false
 NEXT_PUBLIC_APP_URL=
-SEND_NO_CHANGE_EMAIL=false
 ```
 
 ## Local Setup
 
 ```bash
 npm install
-npx prisma generate
-npx prisma migrate dev
-npm run db:seed
 npm run dev
 ```
 
 Open `http://localhost:3000`.
-
-## Create Postgres
-
-For local development, use any Postgres database and set `DATABASE_URL`, for example:
-
-```bash
-DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/bracket_watch?schema=public"
-```
-
-For Vercel, create a Vercel Postgres/Neon/Supabase database, copy the connection string into `DATABASE_URL`, then run migrations from your machine or CI:
-
-```bash
-npx prisma migrate deploy
-npm run db:seed
-```
 
 ## Mock Mode
 
@@ -86,53 +60,25 @@ The included fixtures contain:
 - one radar athlete registered in `BLACK / Master 3 / Male / Rooster`
 - one example change log fixture
 
-Run a manual scan from `/settings` or the dashboard to populate the database from fixtures.
+Run a manual scan from the dashboard to populate the browser-stored snapshot from fixtures.
 
 ## Manual Scan
 
-The dashboard and settings page include a `Run Scan Now` button. Manual scans are rate-limited to once every 10 minutes.
+The dashboard includes a `Run Scan Now` button. It performs a low-impact live scan and stores the latest result in browser local storage.
 
 You can also call:
 
 ```bash
-curl -X POST http://localhost:3000/api/scans/run
+curl -X POST http://localhost:3000/api/live-scan
 ```
-
-## Vercel Cron
-
-`vercel.json` schedules:
-
-```json
-{
-  "path": "/api/cron/daily-scan",
-  "schedule": "15 11 * * *"
-}
-```
-
-Vercel cron schedules are UTC. 11:15 UTC is morning Eastern time, but this will shift relative to daylight savings.
-
-Set `CRON_SECRET` and call the cron route with:
-
-```http
-Authorization: Bearer CRON_SECRET
-```
-
-Vercel Cron requests with `vercel-cron/1.0` user agent are also allowed.
 
 ## Deploy To Vercel
 
 1. Push this repo to GitHub.
 2. Import it in Vercel.
-3. Add all required environment variables.
-4. Provision Postgres and set `DATABASE_URL`.
-5. Run:
+3. Deploy.
 
-```bash
-npx prisma migrate deploy
-npm run db:seed
-```
-
-6. Deploy.
+No database is required for the live dashboard.
 
 ## Troubleshooting JiuJitsu.net API Changes
 
@@ -140,8 +86,6 @@ All external responses are validated with Zod in `lib/jiujitsu.ts`. If an upstre
 
 Check:
 
-- `/changes` for `ERROR` entries
-- latest scan `errorMessage`
 - Vercel function logs
 - response schemas in `lib/jiujitsu.ts`
 - mock fixtures in `mock/`
