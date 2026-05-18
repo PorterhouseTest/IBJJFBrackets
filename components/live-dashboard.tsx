@@ -119,12 +119,10 @@ export function LiveDashboard() {
         </div>
       </Card>
 
-      <section className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <Stat label="Last scan" value={current ? new Date(current.scannedAt).toLocaleString() : "Not yet"} />
+      <section className="grid gap-3 md:grid-cols-3">
         <Stat label="Exact events" value={current?.exactEventsFound ?? 0} />
         <Stat label="Exact competitors" value={current?.exactCompetitorsFound ?? 0} />
-        <Stat label="Radar athletes" value={current?.radarAthletesFound ?? 0} />
-        <Stat label="Requests" value={current?.requestsMade ?? 0} />
+        <Stat label="Radar events" value={radarEvents.length} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
