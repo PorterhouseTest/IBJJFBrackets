@@ -54,6 +54,7 @@ function changes(previous: LiveScanResult | null, current: LiveScanResult | null
 export function LiveDashboard() {
   const [current, setCurrent] = useState<LiveScanResult | null>(null);
   const [previous, setPrevious] = useState<LiveScanResult | null>(null);
+  const [openEvents, setOpenEvents] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState("");
   const scanChanges = useMemo(() => changes(previous, current), [previous, current]);
@@ -109,45 +110,68 @@ export function LiveDashboard() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        <Card>
+        <Card className="lg:col-span-2">
           <h2 className="text-lg font-semibold">Exact Division</h2>
-          <p className="mt-1 text-sm text-zinc-400">People currently registered in BLACK / Master 2 / Male / Light Feather.</p>
+          <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in BLACK / Master 2 / Male / Light Feather.</p>
           <div className="mt-4 space-y-3">
-            {current?.exactEvents.flatMap((event) =>
-              event.competitors.map((competitor) => (
-                <div key={`${event.eventName}-${competitor.name}`} className="border-t border-line pt-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{competitor.name}</span>
-                    <Badge tone="accent">EXACT</Badge>
-                  </div>
-                  <p className="text-sm text-zinc-400">{event.eventName}</p>
-                  <p className="text-xs text-zinc-500">
-                    {competitor.team ?? "Team unavailable"} / Rank {competitor.rank ?? "n/a"} / {competitor.rating ?? "n/a"}
-                  </p>
+            {current?.exactEvents.map((event) => {
+              const isOpen = openEvents[event.eventName] ?? false;
+              const topCompetitor = [...event.competitors].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))[0];
+              return (
+                <div key={event.eventName} className="rounded border border-line bg-black/10">
+                  <button
+                    onClick={() => setOpenEvents((value) => ({ ...value, [event.eventName]: !isOpen }))}
+                    className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-white/[0.03]"
+                  >
+                    <div>
+                      <h3 className="font-semibold">{event.eventName}</h3>
+                      <p className="mt-1 text-sm text-zinc-400">
+                        {event.competitors.length} registered / top rating {topCompetitor?.rating ?? "n/a"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge tone="accent">{event.competitors.length}</Badge>
+                      <span className="text-xl text-zinc-400">{isOpen ? "-" : "+"}</span>
+                    </div>
+                  </button>
+                  {isOpen ? (
+                    <div className="border-t border-line p-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[680px] text-left text-sm">
+                          <thead className="text-xs uppercase text-zinc-500">
+                            <tr>
+                              <th className="py-2">Athlete</th>
+                              <th>Team</th>
+                              <th>Country</th>
+                              <th>Rank</th>
+                              <th>Rating</th>
+                              <th>Matches</th>
+                              <th>Seed</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...event.competitors]
+                              .sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
+                              .map((competitor) => (
+                                <tr key={`${event.eventName}-${competitor.name}`} className="border-t border-line">
+                                  <td className="py-3 font-medium">{competitor.name}</td>
+                                  <td>{competitor.team ?? "n/a"}</td>
+                                  <td>{competitor.country ?? "n/a"}</td>
+                                  <td>{competitor.rank ?? "n/a"}</td>
+                                  <td>{competitor.rating ?? "n/a"}</td>
+                                  <td>{competitor.match_count ?? "n/a"}</td>
+                                  <td>{competitor.seed ?? "n/a"}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-              ))
-            )}
-            {!current?.exactCompetitorsFound ? <p className="text-sm text-zinc-500">No exact competitors found yet.</p> : null}
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="text-lg font-semibold">Radar</h2>
-          <p className="mt-1 text-sm text-zinc-400">
-            Athletes ranked in your target division who are registered somewhere upcoming, even if the registered division is different.
-          </p>
-          <div className="mt-4 space-y-3">
-            {current?.radarAthletes.slice(0, 12).map((athlete) => (
-              <div key={`${athlete.eventName}-${athlete.athleteName}-${athlete.registeredDivision}`} className="border-t border-line pt-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{athlete.athleteName}</span>
-                  <Badge>RADAR</Badge>
-                </div>
-                <p className="text-sm text-zinc-400">{athlete.eventName}</p>
-                <p className="text-xs text-zinc-500">{athlete.registeredDivision}</p>
-              </div>
-            ))}
-            {!current?.radarAthletesFound ? <p className="text-sm text-zinc-500">No radar athletes found yet.</p> : null}
+              );
+            })}
+            {!current?.exactEventsFound ? <p className="text-sm text-zinc-500">No exact events found yet.</p> : null}
           </div>
         </Card>
 
@@ -165,6 +189,28 @@ export function LiveDashboard() {
               </div>
             ))}
             {scanChanges.length === 0 ? <p className="text-sm text-zinc-500">No changes recorded yet. Run a scan now, then compare against the next scan.</p> : null}
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid gap-4">
+        <Card>
+          <h2 className="text-lg font-semibold">Radar</h2>
+          <p className="mt-1 text-sm text-zinc-400">
+            Athletes ranked in your target division who are registered somewhere upcoming, even if the registered division is different.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {current?.radarAthletes.slice(0, 18).map((athlete) => (
+              <div key={`${athlete.eventName}-${athlete.athleteName}-${athlete.registeredDivision}`} className="rounded border border-line p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium">{athlete.athleteName}</span>
+                  <Badge>RADAR</Badge>
+                </div>
+                <p className="mt-1 text-sm text-zinc-400">{athlete.eventName}</p>
+                <p className="text-xs text-zinc-500">{athlete.registeredDivision}</p>
+              </div>
+            ))}
+            {!current?.radarAthletesFound ? <p className="text-sm text-zinc-500">No radar athletes found yet.</p> : null}
           </div>
         </Card>
       </section>
