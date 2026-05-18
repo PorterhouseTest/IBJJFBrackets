@@ -55,9 +55,22 @@ export function LiveDashboard() {
   const [current, setCurrent] = useState<LiveScanResult | null>(null);
   const [previous, setPrevious] = useState<LiveScanResult | null>(null);
   const [openEvents, setOpenEvents] = useState<Record<string, boolean>>({});
+  const [openRadarEvents, setOpenRadarEvents] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState("");
   const scanChanges = useMemo(() => changes(previous, current), [previous, current]);
+  const radarEvents = useMemo(() => {
+    const grouped = new Map<string, NonNullable<LiveScanResult["radarAthletes"]>>();
+    for (const athlete of current?.radarAthletes ?? []) {
+      grouped.set(athlete.eventName, [...(grouped.get(athlete.eventName) ?? []), athlete]);
+    }
+    return [...grouped.entries()]
+      .map(([eventName, athletes]) => ({
+        eventName,
+        athletes: athletes.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
+      }))
+      .sort((a, b) => a.eventName.localeCompare(b.eventName));
+  }, [current]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey);
@@ -197,19 +210,72 @@ export function LiveDashboard() {
         <Card>
           <h2 className="text-lg font-semibold">Radar</h2>
           <p className="mt-1 text-sm text-zinc-400">
-            Athletes ranked in your target division who are registered somewhere upcoming, even if the registered division is different.
+            Events where target-ranked athletes are registered somewhere upcoming, even if the registered division is different.
           </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {current?.radarAthletes.slice(0, 18).map((athlete) => (
-              <div key={`${athlete.eventName}-${athlete.athleteName}-${athlete.registeredDivision}`} className="rounded border border-line p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{athlete.athleteName}</span>
-                  <Badge>RADAR</Badge>
-                </div>
-                <p className="mt-1 text-sm text-zinc-400">{athlete.eventName}</p>
-                <p className="text-xs text-zinc-500">{athlete.registeredDivision}</p>
+          <div className="mt-4 space-y-3">
+            {radarEvents.map((event) => {
+              const isOpen = openRadarEvents[event.eventName] ?? false;
+              const topAthlete = event.athletes[0];
+              return (
+                <div key={event.eventName} className="rounded border border-line bg-black/10">
+                  <button
+                    onClick={() => setOpenRadarEvents((value) => ({ ...value, [event.eventName]: !isOpen }))}
+                    className="flex w-full items-center justify-between gap-4 p-4 text-left hover:bg-white/[0.03]"
+                  >
+                    <div>
+                      <h3 className="font-semibold">{event.eventName}</h3>
+                      <p className="mt-1 text-sm text-zinc-400">
+                        {event.athletes.length} radar athlete{event.athletes.length === 1 ? "" : "s"} / top rating {topAthlete?.rating ?? "n/a"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge>{event.athletes.length}</Badge>
+                      <span className="text-xl text-zinc-400">{isOpen ? "-" : "+"}</span>
+                    </div>
+                  </button>
+                  {isOpen ? (
+                    <div className="border-t border-line p-4">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[760px] text-left text-sm">
+                          <thead className="text-xs uppercase text-zinc-500">
+                            <tr>
+                              <th className="py-2">Athlete</th>
+                              <th>Registered division</th>
+                              <th>Country</th>
+                              <th>Rank</th>
+                              <th>Rating</th>
+                              <th>Matches</th>
+                              <th>Instagram</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {event.athletes.map((athlete) => (
+                              <tr key={`${event.eventName}-${athlete.athleteName}-${athlete.registeredDivision}`} className="border-t border-line">
+                                <td className="py-3 font-medium">{athlete.athleteName}</td>
+                                <td>{athlete.registeredDivision}</td>
+                                <td>{athlete.country ?? "n/a"}</td>
+                                <td>{athlete.rank ?? "n/a"}</td>
+                                <td>{athlete.rating ?? "n/a"}</td>
+                                <td>{athlete.matchCount ?? "n/a"}</td>
+                                <td>
+                                  {athlete.instagram ? (
+                                    <a className="text-accent" href={`https://instagram.com/${athlete.instagram}`}>
+                                      Instagram
+                                    </a>
+                                  ) : (
+                                    "n/a"
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
               </div>
-            ))}
+              );
+            })}
             {!current?.radarAthletesFound ? <p className="text-sm text-zinc-500">No radar athletes found yet.</p> : null}
           </div>
         </Card>
