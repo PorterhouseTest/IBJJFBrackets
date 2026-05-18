@@ -29,13 +29,11 @@ This is not a generic scraper dashboard. It is intentionally scoped to this pers
 - Postgres via `DATABASE_URL`
 - Vercel Cron
 - Optional Resend email alerts
-- Simple password protection with `APP_PASSWORD`
 
 ## Environment Variables
 
 ```bash
 DATABASE_URL=
-APP_PASSWORD=
 JIUJITSU_BASE_URL=https://jiujitsu.net
 CRON_SECRET=
 RESEND_API_KEY=
@@ -45,8 +43,6 @@ MOCK_JIUJITSU=false
 NEXT_PUBLIC_APP_URL=
 SEND_NO_CHANGE_EMAIL=false
 ```
-
-In development, if `APP_PASSWORD` is missing, login is allowed with a warning. In production, set `APP_PASSWORD`.
 
 ## Local Setup
 
@@ -94,12 +90,12 @@ Run a manual scan from `/settings` or the dashboard to populate the database fro
 
 ## Manual Scan
 
-The dashboard and settings page include a `Run Scan Now` button. Manual scans require login and are rate-limited to once every 10 minutes.
+The dashboard and settings page include a `Run Scan Now` button. Manual scans are rate-limited to once every 10 minutes.
 
 You can also call:
 
 ```bash
-curl -X POST http://localhost:3000/api/scans/run --cookie "bracket_watch_session=..."
+curl -X POST http://localhost:3000/api/scans/run
 ```
 
 ## Vercel Cron

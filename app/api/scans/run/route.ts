@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { MANUAL_SCAN_INTERVAL_MS } from "@/lib/constants";
-import { isLoggedIn } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { runDailyScan } from "@/lib/scanner";
 
 export async function POST() {
-  if (!(await isLoggedIn())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const latestManualLikeRun = await prisma.scanRun.findFirst({
     orderBy: { startedAt: "desc" }
   });

@@ -3,14 +3,6 @@ CREATE TYPE "SourceType" AS ENUM ('EXACT_DIVISION', 'RADAR');
 CREATE TYPE "ChangeType" AS ENUM ('NEW_EVENT', 'REMOVED_EVENT', 'NEW_COMPETITOR', 'REMOVED_COMPETITOR', 'TEAM_CHANGED', 'DIVISION_CHANGED', 'NEW_RADAR_ATHLETE', 'REMOVED_RADAR_ATHLETE', 'ERROR');
 CREATE TYPE "Severity" AS ENUM ('INFO', 'IMPORTANT', 'CRITICAL');
 
-CREATE TABLE "UserSession" (
-  "id" TEXT NOT NULL,
-  "tokenHash" TEXT NOT NULL,
-  "expiresAt" TIMESTAMP(3) NOT NULL,
-  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT "UserSession_pkey" PRIMARY KEY ("id")
-);
-
 CREATE TABLE "WatchProfile" (
   "id" TEXT NOT NULL,
   "name" TEXT NOT NULL,
@@ -106,7 +98,6 @@ CREATE TABLE "ChangeLog" (
   CONSTRAINT "ChangeLog_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "UserSession_tokenHash_key" ON "UserSession"("tokenHash");
 CREATE INDEX "ScanRun_watchProfileId_status_startedAt_idx" ON "ScanRun"("watchProfileId", "status", "startedAt");
 CREATE UNIQUE INDEX "EventSnapshot_scanRunId_registrationLink_eventName_key" ON "EventSnapshot"("scanRunId", "registrationLink", "eventName");
 CREATE INDEX "EventSnapshot_watchProfileId_eventStartDate_idx" ON "EventSnapshot"("watchProfileId", "eventStartDate");

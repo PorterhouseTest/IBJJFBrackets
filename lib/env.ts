@@ -2,7 +2,6 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().optional(),
-  APP_PASSWORD: z.string().optional(),
   JIUJITSU_BASE_URL: z.string().url().default("https://jiujitsu.net"),
   CRON_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { logoutAction } from "@/app/actions";
 
 const links = [
   ["/", "Dashboard"],
@@ -22,9 +21,6 @@ export function Nav() {
               {label}
             </Link>
           ))}
-          <form action={logoutAction}>
-            <button className="rounded border border-line px-3 py-1 text-xs hover:border-accent">Log out</button>
-          </form>
         </nav>
       </div>
     </header>
