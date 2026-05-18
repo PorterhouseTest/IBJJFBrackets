@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, Stat, Badge } from "@/components/ui";
 import type { LiveScanResult } from "@/lib/live-scan";
 
-const storageKey = "bracket-watch:last-scan";
+const storagePrefix = "bracket-watch:last-scan:";
 const genderOptions = ["Male", "Female"];
 const ageOptions = ["Adult", "Master 1", "Master 2", "Master 3", "Master 4", "Master 5", "Master 6", "Master 7"];
 const beltOptions = ["WHITE", "BLUE", "PURPLE", "BROWN", "BLACK"];
@@ -24,9 +24,14 @@ export function LiveDashboard() {
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState("");
   const [hasMounted, setHasMounted] = useState(false);
+  const activeRequest = useRef(0);
+  const abortController = useRef<AbortController | null>(null);
+  const selectedExactDivision = `${division.belt} / ${division.age} / ${division.gender} / ${division.weight}`;
+  const selectedScanKey = `${division.gi ? "gi" : "nogi"}|${selectedExactDivision}`;
+  const displayed = current?.exactDivision === selectedExactDivision && current.gi === division.gi ? current : null;
   const radarEvents = useMemo(() => {
     const grouped = new Map<string, NonNullable<LiveScanResult["radarAthletes"]>>();
-    for (const athlete of current?.radarAthletes ?? []) {
+    for (const athlete of displayed?.radarAthletes ?? []) {
       grouped.set(athlete.eventName, [...(grouped.get(athlete.eventName) ?? []), athlete]);
     }
     return [...grouped.entries()]
@@ -35,40 +40,52 @@ export function LiveDashboard() {
         athletes: athletes.sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))
       }))
       .sort((a, b) => a.eventName.localeCompare(b.eventName));
-  }, [current]);
-  const selectedExactDivision = `${division.belt} / ${division.age} / ${division.gender} / ${division.weight}`;
+  }, [displayed]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(storageKey);
+    const saved = window.localStorage.getItem(selectedStorageKey(selectedScanKey));
     if (saved) setCurrent(JSON.parse(saved) as LiveScanResult);
     setHasMounted(true);
   }, []);
 
   useEffect(() => {
     if (!hasMounted) return;
+    const saved = window.localStorage.getItem(selectedStorageKey(selectedScanKey));
+    setCurrent(saved ? (JSON.parse(saved) as LiveScanResult) : null);
+    setOpenEvents({});
+    setOpenRadarEvents({});
     const timeout = window.setTimeout(() => {
       void runScan();
-    }, 500);
+    }, 700);
     return () => window.clearTimeout(timeout);
-  }, [division, hasMounted]);
+  }, [selectedScanKey, hasMounted]);
 
   async function runScan() {
+    const requestId = activeRequest.current + 1;
+    activeRequest.current = requestId;
+    abortController.current?.abort();
+    const controller = new AbortController();
+    abortController.current = controller;
     setStatus("running");
     setError("");
     try {
       const response = await fetch("/api/live-scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(division)
+        body: JSON.stringify(division),
+        signal: controller.signal
       });
       const payload = (await response.json()) as LiveScanResult | { error: string };
       if (!response.ok || "error" in payload) throw new Error("error" in payload ? payload.error : "Live scan failed");
+      if (requestId !== activeRequest.current) return;
       setCurrent(payload);
       setOpenEvents({});
       setOpenRadarEvents({});
-      window.localStorage.setItem(storageKey, JSON.stringify(payload));
+      window.localStorage.setItem(selectedStorageKey(selectedScanKey), JSON.stringify(payload));
       setStatus("idle");
     } catch (scanError) {
+      if (controller.signal.aborted) return;
+      if (requestId !== activeRequest.current) return;
       setError(scanError instanceof Error ? scanError.message : "Live scan failed");
       setStatus("error");
     }
@@ -120,8 +137,8 @@ export function LiveDashboard() {
       </Card>
 
       <section className="grid gap-3 md:grid-cols-3">
-        <Stat label="Exact events" value={current?.exactEventsFound ?? 0} />
-        <Stat label="Exact competitors" value={current?.exactCompetitorsFound ?? 0} />
+        <Stat label="Exact events" value={displayed?.exactEventsFound ?? 0} />
+        <Stat label="Exact competitors" value={displayed?.exactCompetitorsFound ?? 0} />
         <Stat label="Radar events" value={radarEvents.length} />
       </section>
 
@@ -130,7 +147,7 @@ export function LiveDashboard() {
           <h2 className="text-lg font-semibold">Exact Division</h2>
           <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in {selectedExactDivision}.</p>
           <div className="mt-4 space-y-3">
-            {current?.exactEvents.map((event) => {
+            {displayed?.exactEvents.map((event) => {
               const isOpen = openEvents[event.eventName] ?? false;
               const topCompetitor = [...event.competitors].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1))[0];
               return (
@@ -187,7 +204,9 @@ export function LiveDashboard() {
                 </div>
               );
             })}
-            {!current?.exactEventsFound ? <p className="text-sm text-zinc-500">No exact events found yet.</p> : null}
+            {!displayed?.exactEventsFound ? (
+              <p className="text-sm text-zinc-500">{status === "running" ? "Checking events for this division..." : "No exact events found yet."}</p>
+            ) : null}
           </div>
         </Card>
 
@@ -260,12 +279,18 @@ export function LiveDashboard() {
               </div>
               );
             })}
-            {!current?.radarAthletesFound ? <p className="text-sm text-zinc-500">No radar athletes found yet.</p> : null}
+            {!displayed?.radarAthletesFound ? (
+              <p className="text-sm text-zinc-500">{status === "running" ? "Checking radar athletes for this division..." : "No radar athletes found yet."}</p>
+            ) : null}
           </div>
         </Card>
       </section>
     </div>
   );
+}
+
+function selectedStorageKey(scanKey: string) {
+  return `${storagePrefix}${scanKey}`;
 }
 
 function DivisionSelect({
