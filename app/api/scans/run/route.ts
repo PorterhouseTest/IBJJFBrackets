@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { MANUAL_SCAN_INTERVAL_MS } from "@/lib/constants";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { runDailyScan } from "@/lib/scanner";
 
 export async function POST() {
+  if (!env.DATABASE_URL) return NextResponse.json({ error: "DATABASE_URL is not configured." }, { status: 503 });
   const latestManualLikeRun = await prisma.scanRun.findFirst({
     orderBy: { startedAt: "desc" }
   });

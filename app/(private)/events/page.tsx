@@ -2,6 +2,8 @@ import { Card, Badge } from "@/components/ui";
 import { athleteUrl, countryFlag, externalUrl } from "@/components/links";
 import { getEventsData } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function EventsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const { events, radar } = await getEventsData();

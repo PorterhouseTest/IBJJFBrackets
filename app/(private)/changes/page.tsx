@@ -2,6 +2,8 @@ import { format } from "date-fns";
 import { Card, Badge } from "@/components/ui";
 import { getChangesData } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function ChangesPage() {
   const changes = await getChangesData();
   const groups = new Map<string, typeof changes>();

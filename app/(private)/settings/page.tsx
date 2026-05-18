@@ -1,11 +1,14 @@
 import { updateProfileAction } from "@/app/actions";
 import { ManualScanButton } from "@/components/manual-scan-button";
 import { Card } from "@/components/ui";
-import { getActiveProfile } from "@/lib/data";
+import { databaseConfigured, getActiveProfile } from "@/lib/data";
+
+export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const profile = await getActiveProfile();
   if (!profile) return null;
+  const hasDatabase = databaseConfigured();
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
       <Card>
@@ -22,7 +25,12 @@ export default async function SettingsPage() {
           <div className="md:col-span-2 rounded border border-line bg-black/20 p-3 text-sm text-zinc-400">
             Exact division is generated as Belt / Age / Gender / Weight.
           </div>
-          <button className="rounded bg-accent px-4 py-2 font-semibold text-black md:w-fit">Save profile</button>
+          {!hasDatabase ? (
+            <div className="md:col-span-2 rounded border border-accent/50 bg-accent/10 p-3 text-sm text-accent">
+              DATABASE_URL is not configured, so profile changes cannot be saved yet.
+            </div>
+          ) : null}
+          <button disabled={!hasDatabase} className="rounded bg-accent px-4 py-2 font-semibold text-black disabled:opacity-50 md:w-fit">Save profile</button>
         </form>
       </Card>
       <Card>

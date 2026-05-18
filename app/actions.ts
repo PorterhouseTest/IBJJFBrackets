@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 
 export async function updateProfileAction(formData: FormData) {
+  if (!env.DATABASE_URL) return;
   const id = String(formData.get("id"));
   const gi = formData.get("gi") === "on";
   const belt = String(formData.get("belt"));

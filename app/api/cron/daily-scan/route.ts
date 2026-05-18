@@ -3,6 +3,7 @@ import { runDailyScan } from "@/lib/scanner";
 import { env } from "@/lib/env";
 
 export async function GET(request: NextRequest) {
+  if (!env.DATABASE_URL) return NextResponse.json({ error: "DATABASE_URL is not configured." }, { status: 503 });
   const userAgent = request.headers.get("user-agent") ?? "";
   const auth = request.headers.get("authorization");
   const cronSecretOk = env.CRON_SECRET ? auth === `Bearer ${env.CRON_SECRET}` : false;

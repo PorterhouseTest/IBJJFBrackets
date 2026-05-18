@@ -2,6 +2,8 @@ import { Card, Badge } from "@/components/ui";
 import { athleteUrl, countryFlag } from "@/components/links";
 import { getAthletesData } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AthletesPage() {
   const items = await getAthletesData();
   const byAthlete = new Map<string, typeof items>();

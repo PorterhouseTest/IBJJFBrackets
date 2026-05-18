@@ -4,6 +4,8 @@ import { ManualScanButton } from "@/components/manual-scan-button";
 import { athleteUrl } from "@/components/links";
 import { getDashboardData } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 function when(date: Date | null | undefined) {
   return date ? format(date, "MMM d, yyyy h:mm a") : "Not yet";
 }
@@ -19,6 +21,14 @@ export default async function DashboardPage() {
         </div>
         <ManualScanButton />
       </section>
+      {!data.databaseConfigured ? (
+        <Card className="border-accent/50 bg-accent/10">
+          <h2 className="font-semibold text-accent">Database not configured</h2>
+          <p className="mt-1 text-sm text-zinc-300">
+            Add DATABASE_URL in Vercel to store scans, changes, events, and athletes. The dashboard is available, but scans cannot run until Postgres is connected.
+          </p>
+        </Card>
+      ) : null}
 
       <section className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
         <Stat label="Last successful scan" value={when(data.latest?.finishedAt)} />
