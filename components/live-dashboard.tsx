@@ -23,6 +23,7 @@ export function LiveDashboard() {
   const [openRadarEvents, setOpenRadarEvents] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState("");
+  const [hasMounted, setHasMounted] = useState(false);
   const radarEvents = useMemo(() => {
     const grouped = new Map<string, NonNullable<LiveScanResult["radarAthletes"]>>();
     for (const athlete of current?.radarAthletes ?? []) {
@@ -40,7 +41,16 @@ export function LiveDashboard() {
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey);
     if (saved) setCurrent(JSON.parse(saved) as LiveScanResult);
+    setHasMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!hasMounted) return;
+    const timeout = window.setTimeout(() => {
+      void runScan();
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [division, hasMounted]);
 
   async function runScan() {
     setStatus("running");
@@ -74,7 +84,7 @@ export function LiveDashboard() {
           </p>
         </div>
         <button onClick={runScan} disabled={status === "running"} className="rounded bg-accent px-4 py-2 font-semibold text-black disabled:opacity-60">
-          {status === "running" ? "Scanning..." : "Run Scan Now"}
+          {status === "running" ? "Scanning..." : "Refresh Scan"}
         </button>
       </section>
 
@@ -86,6 +96,10 @@ export function LiveDashboard() {
       ) : null}
 
       <Card>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-zinc-400">Changing a dropdown automatically runs a fresh scan.</p>
+          {status === "running" ? <span className="text-sm font-semibold text-accent">Scanning...</span> : null}
+        </div>
         <div className="grid gap-3 md:grid-cols-5">
           <label className="text-xs uppercase tracking-wide text-zinc-500">
             Sport
