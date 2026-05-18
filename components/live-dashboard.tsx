@@ -6,59 +6,12 @@ import type { LiveScanResult } from "@/lib/live-scan";
 
 const storageKey = "bracket-watch:last-scan";
 
-type Change = {
-  title: string;
-  description: string;
-  tone: "accent" | "default";
-};
-
-function competitorKey(scan: LiveScanResult) {
-  return scan.exactEvents.flatMap((event) =>
-    event.competitors.map((competitor) => `${event.eventName}|${competitor.name}|${competitor.registeredDivision}`)
-  );
-}
-
-function radarKey(scan: LiveScanResult) {
-  return scan.radarAthletes.map((athlete) => `${athlete.eventName}|${athlete.athleteName}|${athlete.registeredDivision}`);
-}
-
-function changes(previous: LiveScanResult | null, current: LiveScanResult | null): Change[] {
-  if (!previous || !current) return [];
-  const output: Change[] = [];
-  const oldCompetitors = new Set(competitorKey(previous));
-  const newCompetitors = new Set(competitorKey(current));
-  const oldRadar = new Set(radarKey(previous));
-  const newRadar = new Set(radarKey(current));
-
-  for (const key of newCompetitors) {
-    if (!oldCompetitors.has(key)) {
-      const [eventName, athleteName] = key.split("|");
-      output.push({ title: "New exact competitor", description: `${athleteName} appeared in ${eventName}.`, tone: "accent" });
-    }
-  }
-  for (const key of oldCompetitors) {
-    if (!newCompetitors.has(key)) {
-      const [eventName, athleteName] = key.split("|");
-      output.push({ title: "Removed exact competitor", description: `${athleteName} is no longer listed in ${eventName}.`, tone: "accent" });
-    }
-  }
-  for (const key of newRadar) {
-    if (!oldRadar.has(key)) {
-      const [eventName, athleteName, division] = key.split("|");
-      output.push({ title: "New radar athlete", description: `${athleteName} is registered for ${eventName} in ${division}.`, tone: "default" });
-    }
-  }
-  return output;
-}
-
 export function LiveDashboard() {
   const [current, setCurrent] = useState<LiveScanResult | null>(null);
-  const [previous, setPrevious] = useState<LiveScanResult | null>(null);
   const [openEvents, setOpenEvents] = useState<Record<string, boolean>>({});
   const [openRadarEvents, setOpenRadarEvents] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
   const [error, setError] = useState("");
-  const scanChanges = useMemo(() => changes(previous, current), [previous, current]);
   const radarEvents = useMemo(() => {
     const grouped = new Map<string, NonNullable<LiveScanResult["radarAthletes"]>>();
     for (const athlete of current?.radarAthletes ?? []) {
@@ -84,7 +37,6 @@ export function LiveDashboard() {
       const response = await fetch("/api/live-scan", { method: "POST" });
       const payload = (await response.json()) as LiveScanResult | { error: string };
       if (!response.ok || "error" in payload) throw new Error("error" in payload ? payload.error : "Live scan failed");
-      setPrevious(current);
       setCurrent(payload);
       window.localStorage.setItem(storageKey, JSON.stringify(payload));
       setStatus("idle");
@@ -118,12 +70,11 @@ export function LiveDashboard() {
         <Stat label="Exact events" value={current?.exactEventsFound ?? 0} />
         <Stat label="Exact competitors" value={current?.exactCompetitorsFound ?? 0} />
         <Stat label="Radar athletes" value={current?.radarAthletesFound ?? 0} />
-        <Stat label="Changes" value={scanChanges.length} />
         <Stat label="Requests" value={current?.requestsMade ?? 0} />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <section className="grid gap-4">
+        <Card>
           <h2 className="text-lg font-semibold">Exact Division</h2>
           <p className="mt-1 text-sm text-zinc-400">Events that currently have people registered in BLACK / Master 2 / Male / Light Feather.</p>
           <div className="mt-4 space-y-3">
@@ -188,25 +139,6 @@ export function LiveDashboard() {
           </div>
         </Card>
 
-        <Card>
-          <h2 className="text-lg font-semibold">Changes</h2>
-          <p className="mt-1 text-sm text-zinc-400">Movement since your previous scan in this browser.</p>
-          <div className="mt-4 space-y-3">
-            {scanChanges.map((change) => (
-              <div key={`${change.title}-${change.description}`} className="border-t border-line pt-3">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{change.title}</p>
-                  <Badge tone={change.tone}>{change.tone === "accent" ? "IMPORTANT" : "INFO"}</Badge>
-                </div>
-                <p className="text-sm text-zinc-400">{change.description}</p>
-              </div>
-            ))}
-            {scanChanges.length === 0 ? <p className="text-sm text-zinc-500">No changes recorded yet. Run a scan now, then compare against the next scan.</p> : null}
-          </div>
-        </Card>
-      </section>
-
-      <section className="grid gap-4">
         <Card>
           <h2 className="text-lg font-semibold">Radar</h2>
           <p className="mt-1 text-sm text-zinc-400">
