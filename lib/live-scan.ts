@@ -113,21 +113,23 @@ export async function runLiveScan(profile = defaultProfile): Promise<LiveScanRes
 
   const [exactEvents, radarRows] = await Promise.all([exactEventsPromise, fetchAllRadarAthletes(profile)]);
   const radarAthletes = radarRows.flatMap((row) =>
-    row.registrations.map((registration) => ({
-      athleteName: row.name,
-      personalName: row.personal_name ?? null,
-      country: row.country ?? null,
-      instagram: row.instagram_profile ?? null,
-      slug: row.slug ?? null,
-      rating: row.rating ?? null,
-      rank: row.rank ?? null,
-      matchCount: row.match_count ?? null,
-      eventName: registration.event_name,
-      registeredDivision: registration.division,
-      registrationLink: registration.link ?? null,
-      eventStartDate: registration.event_start_date ?? null,
-      eventEndDate: registration.event_end_date ?? null
-    }))
+    row.registrations
+      .filter((registration) => eventMatchesSport(registration.event_name, profile.gi))
+      .map((registration) => ({
+        athleteName: row.name,
+        personalName: row.personal_name ?? null,
+        country: row.country ?? null,
+        instagram: row.instagram_profile ?? null,
+        slug: row.slug ?? null,
+        rating: row.rating ?? null,
+        rank: row.rank ?? null,
+        matchCount: row.match_count ?? null,
+        eventName: registration.event_name,
+        registeredDivision: registration.division,
+        registrationLink: registration.link ?? null,
+        eventStartDate: registration.event_start_date ?? null,
+        eventEndDate: registration.event_end_date ?? null
+      }))
   );
 
   return {

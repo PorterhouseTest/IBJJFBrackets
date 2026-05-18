@@ -4,18 +4,12 @@ Bracket Watch is a zero-login, zero-database scouting dashboard for one JiuJitsu
 
 `BLACK / Master 2 / Male / Light Feather`
 
-It scans JiuJitsu.net registration data when you click `Run Scan Now`, tracks ranked target-division athletes who are registered elsewhere, and highlights changes compared with the previous scan stored in your browser.
+It scans JiuJitsu.net registration data from the dashboard and tracks ranked target-division athletes who are registered elsewhere.
 
 ## What It Tracks
 
 - Upcoming competitions with someone registered in `BLACK / Master 2 / Male / Light Feather`
 - Athletes in that exact division, including team, rating, rank, country, Instagram, and JiuJitsu.net profile links when available
-- Changes since the last scan:
-  - new or removed exact events
-  - new or removed exact competitors
-  - team changes
-  - division changes
-  - radar athlete additions/removals
 - Radar athletes from `/api/top` for the target ranking query, even when their registration division is different
 
 This is not a generic scraper dashboard. It is intentionally scoped to this personal watch profile.
@@ -25,7 +19,6 @@ This is not a generic scraper dashboard. It is intentionally scoped to this pers
 - Next.js App Router
 - TypeScript strict mode
 - Tailwind CSS
-- Prisma
 - Deploys to Vercel without required services
 
 ## Environment Variables
@@ -62,9 +55,9 @@ The included fixtures contain:
 
 Run a manual scan from the dashboard to populate the browser-stored snapshot from fixtures.
 
-## Manual Scan
+## Live Scan
 
-The dashboard includes a `Run Scan Now` button. It performs a low-impact live scan and stores the latest result in browser local storage.
+The dashboard automatically scans when division filters change and includes a refresh button for re-running the current search.
 
 You can also call:
 
