@@ -37,7 +37,7 @@ export default async function DashboardPage() {
             {data.exactCompetitors.slice(0, 6).map((item) => (
               <div key={item.id} className="border-t border-line pt-3">
                 <div className="flex items-center justify-between gap-2">
-                  <a href={athleteUrl(item.slug)} className="font-medium hover:text-accent">
+                  <a href={athleteUrl(item.slug) ?? "#"} className="font-medium hover:text-accent">
                     {item.athleteName}
                   </a>
                   <Badge tone="accent">EXACT</Badge>
